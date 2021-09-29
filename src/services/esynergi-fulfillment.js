@@ -44,15 +44,18 @@ class EsynergiFulfillmentService extends FulfillmentService {
 		}
 	}
 
-	// should return array of `shipping_option.data`
 	async getFulfillmentOptions() {
-		// Fulfillment options from E-synergi: https://wms.e-synergi.dk/api-ext-v1/shipping-service
-		// return data.items
-		// TODO: Potentially hardcode parcel shops
-		//    Look Webshipper plugin -> includes `require_drop_point`
-		//    if service_code === `ShopDeliveryService`
+		const rates = await this.client_.shippingRates.list({
+			service_id: this.options_.service_id,
+		})
 
-        
+		return rates.data.items.map((r) => ({
+			id: r.service_id,
+			esynergi_id: r.service_id,
+			carrier_id: r.company_id,
+			name: r.service_name,
+			require_drop_point: r.service_code === 'XXX' ? true : false, // TODO: Check what service codes require drop point
+		}))
 	}
 
 	canCalculate() {
@@ -78,8 +81,73 @@ class EsynergiFulfillmentService extends FulfillmentService {
 		fromOrder,
 		fulfillment
 	) {
-		// create order in esynergi
-		// https://wms.e-synergi.dk/docs/v1#tag/Order/paths/~1order~1create/post
+		const existing = fromOrder.metadata?.esynergi_order_id
+
+		let esynergiOrder
+		if (existing) {
+			esynergiOrder = await this.client_.orders.retrieve(existing)
+		}
+
+		const { shipping_address } = fromOrder
+
+		if (!esynergiOrder) {
+			/* 			let invoice
+			let certificateOfOrigin
+
+			if(this.invoiceGenerator_) {
+				const base64Invoice = await this.invoiceGenerator_.createInvoice(
+					fromOrder,
+					fulfillmentItems
+				)
+
+				invoice = await this.client_.documents
+			} */
+
+			let id = fulfillment.id
+			let visible_ref = `${fromOrder.display_id}-${id.substr(
+				id.length - 4
+			)}`
+			let ext_ref = `${fromOrder.id}.${fulfillment.id}`
+
+			if (fromOrder.is_swap) {
+				visible_ref = `${fromOrder.display_id}`
+			}
+
+			const newOrder = {
+				order_no: 'XXX',
+				customer_no: 'XXX',
+				delivery_date: 'XXX',
+				shop_id: 'XXX',
+				reference: 'XXX',
+				note: 'XXX',
+				phone: shipping_address.phone,
+				email: fromOrder.email,
+				company_id: methodData.carrier_id,
+				service_id: methodData.service_id,
+				address: {
+					street: shipping_address.address_1,
+					zip_code: shipping_address.postal_code,
+					city: shipping_address.city,
+					country: shipping_address.country_code,
+				},
+				product: fulfillmentItems.map((item) => {
+					return {
+						product_no: item.variant.sku,
+						quantity: item.quantity,
+					}
+				}),
+			}
+
+			return this.client_.orders
+				.create(newOrder)
+				.then((result) => {
+					return result.data
+				})
+				.catch((error) => {
+					this.logger_.warn(error.response)
+					throw error
+				})
+		}
 	}
 
 	/**
@@ -102,7 +170,26 @@ class EsynergiFulfillmentService extends FulfillmentService {
 	 * @param {object} data - the fulfilment data
 	 * @return {Promise<object>} the result of the cancellation
 	 */
-	async cancelFulfillment(data) {}
+	async cancelFulfillment(data) {
+		if (Array.isArray(data)) {
+			data = data[0]
+		}
+
+		const order = await this.client_.orders
+			.retrieve(data.id)
+			.catch(() => undefined)
+		
+		if (!order) {
+			return Promise.resolve()
+		}
+
+		const itemAlreadyShipped = order.data.items.some((item) => item.status === '5900' || item.status === '5901')
+
+		if (itemAlreadyShipped) throw new Error("Cannot cancel order that is shipped or completed")
+
+		return this.client_.orders.delete(data.id)
+
+	}
 }
 
 export default EsynergiFulfillmentService
