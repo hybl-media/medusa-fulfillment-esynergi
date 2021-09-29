@@ -13,18 +13,75 @@ class Esynergi {
         })
 
         this.shipments = this.buildShipmentEndpoints()
+        this.orders = this.buildOrderEndpoints()
     }
 
     buildShipmentEndpoints = () => {
         return {
-            retrieve: async (id) => {
-                const path = `/shipping-service?filter[service_id][=]=${id}` // Check the correct path
+            list: async () => {
+                const path = `/shipping-service` // Check the correct path
                 return this.client({
                     method: 'GET',
                     url: path
                 }).then(({data}) => data)
             }
             // There is no create endpoint at Esynergi
+        }
+    }
+
+    buildShippingRateEndpoints_ = () => {
+        return {
+          retrieve: async (id) => {
+            const path = `/v2/shipping_rates/${id}`
+            return this.client_({
+              method: "GET",
+              url: path,
+            }).then(({ data }) => data)
+          },
+          list: async (params = {}) => {
+            let path = `/v2/shipping_rates`
+    
+            if (Object.entries(params).length) {
+              const search = Object.entries(params).map(([key, value]) => {
+                return `filter[${key}]=${value}`
+              })
+              path += `?${search.join("&")}`
+            }
+    
+            return this.client_({
+              method: "GET",
+              url: path,
+            }).then(({ data }) => data)
+          },
+        }
+      }    
+
+    buildOrderEndpoints = () => {
+        return {
+            retrieve: async (id) => {
+                const path = `/order/view?id=${id}`
+                return this.client({
+                    method: 'GET',
+                    url: path
+                }).then(({data}) => data)
+            },
+            create: async (data) => {
+                const path = `/order/create`
+                return this.client({
+                    method: 'POST',
+                    url: path,
+                    data: {
+                        data
+                    },
+                }).then(({data}) => data)
+            },
+            delete: async (id) => {
+                const path = `/order/delete?id=${id}`
+                return this.client({
+                    method: 'DEL',
+                    url: path,
+                }).then(({data}) => data)
+            }
         }
     }
 }
