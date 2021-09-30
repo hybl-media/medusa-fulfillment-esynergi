@@ -5,7 +5,7 @@ class Esynergi {
 		this.account = account
 		this.token = token
 		this.client = axios.create({
-			baseURL: `https://${account}/api-ext-v1`,
+			baseURL: `https://${account}`,
 			headers: {
 				'content-type': 'application/vnd.api+json',
 				Authorization: `Bearer ${token}`,
@@ -13,7 +13,8 @@ class Esynergi {
 		})
 		this.shippingRates = this.buildShippingRateEndpoints()
 		this.orders = this.buildOrderEndpoints()
-		this.customer = this.buildCustomerEndpoints
+		this.customer = this.buildCustomerEndpoints()
+		this.droppoints = this.buildDroppointEndpoints()
 	}
 
 	buildCustomerEndpoints = () => {
@@ -33,6 +34,29 @@ class Esynergi {
 					data: {
 						data
 					}
+				}).then(({ data }) => data)
+			}
+		}
+	}
+
+	buildDroppointEndpoints = () => {
+		return {
+			list: async (params = {}) => {
+				let path = `/ship/pickup-point`
+
+				if (Object.entries(params).length) {
+					const search = Object.entries(params).map(
+						([key, value]) => {
+							return `${key}=${value}`
+						}
+					)
+					path += `?${search.join('&')}`
+				}
+				
+				return this.client({
+					method: 'GET',
+					baseURL: 'https://wms.e-synergi.dk/api',
+					url: path,
 				}).then(({ data }) => data)
 			}
 		}

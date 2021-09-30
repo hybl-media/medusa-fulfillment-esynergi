@@ -55,7 +55,7 @@ class EsynergiFulfillmentService extends FulfillmentService {
 			carrier_id: r.company_id,
 			name: r.service_name,
 			require_drop_point:
-				r.service_code === 'ShopDeliveryService' ? true : false, // TODO: Check what service codes require drop point
+				r.service_code === 'ShopDeliveryService' ? true : false, 
 		}))
 	}
 
@@ -124,8 +124,8 @@ class EsynergiFulfillmentService extends FulfillmentService {
 				order_no: visible_ref,
 				customer_no: esynergi_customer.id,
 				delivery_date: new Date().toLocaleDateString(),
-				shop_id: 'XXX',
 				reference: ext_ref,
+				shop_id: null,
 				phone: shipping_address.phone,
 				email: fromOrder.email,
 				company_id: methodData.carrier_id,
@@ -142,6 +142,10 @@ class EsynergiFulfillmentService extends FulfillmentService {
 						quantity: item.quantity,
 					}
 				}),
+			}
+
+			if (methodData.require_drop_point) {
+				newOrder.shop_id = methodData.drop_point_id // TO DO get shop id
 			}
 
 			return this.client_.orders
@@ -168,7 +172,20 @@ class EsynergiFulfillmentService extends FulfillmentService {
 	 */
 	async getFulfillmentDocuments(data) {}
 
-	async retrieveDropPoints(id, zip, countryCode, address1) {}
+	async retrieveDropPoints(id, zip, countryCode, address1) {
+		const serviceName = await this.client_.shippingRates.list({
+			company_id: id,
+		})?.[0].company_name
+
+		const points = await this.client_.droppoints.list({
+			service_id: this.options_.service_id,
+			zipCode: zip,
+			countryCode: countryCode,
+			service: serviceName.toLowerCase()
+		})
+
+		return points
+	}
 
 	/**
 	 * Cancels a fulfillment. If the fulfillment has already been canceled this
