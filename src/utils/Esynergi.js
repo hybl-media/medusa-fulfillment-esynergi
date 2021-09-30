@@ -13,6 +13,29 @@ class Esynergi {
 		})
 		this.shippingRates = this.buildShippingRateEndpoints()
 		this.orders = this.buildOrderEndpoints()
+		this.customer = this.buildCustomerEndpoints
+	}
+
+	buildCustomerEndpoints = () => {
+		return {
+			retrieve: async (email) => {
+				const path = `/customer?filter[email]=${email}`
+				return this.client({
+					method: 'GET',
+					url: path
+				}).then(({ data }) => data)
+			},
+			create: async (data) => {
+				const path = `/customer/create`
+				return this.client({
+					method: 'POST',
+					url: path,
+					data: {
+						data
+					}
+				}).then(({ data }) => data)
+			}
+		}
 	}
 
 	buildShippingRateEndpoints = () => {

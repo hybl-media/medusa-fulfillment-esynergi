@@ -54,7 +54,8 @@ class EsynergiFulfillmentService extends FulfillmentService {
 			esynergi_id: r.service_id,
 			carrier_id: r.company_id,
 			name: r.service_name,
-			require_drop_point: r.service_code === 'ShopDeliveryService' ? true : false, // TODO: Check what service codes require drop point
+			require_drop_point:
+				r.service_code === 'ShopDeliveryService' ? true : false, // TODO: Check what service codes require drop point
 		}))
 	}
 
@@ -83,43 +84,48 @@ class EsynergiFulfillmentService extends FulfillmentService {
 	) {
 		const existing = fromOrder.metadata?.esynergi_order_id
 
-		let esynergiOrder
 		if (existing) {
-			esynergiOrder = await this.client_.orders.retrieve(existing)
-		}
-
-		const { shipping_address } = fromOrder
-
-		if (!esynergiOrder) {
-			/* 			let invoice
-			let certificateOfOrigin
-
-			if(this.invoiceGenerator_) {
-				const base64Invoice = await this.invoiceGenerator_.createInvoice(
-					fromOrder,
-					fulfillmentItems
-				)
-
-				invoice = await this.client_.documents
-			} */
-
-			let id = fulfillment.id
-			let visible_ref = `${fromOrder.display_id}-${id.substr(
+			return this.client_.orders
+				.retrieve(existing)
+				.then((result) => {
+					return result.data
+				})
+				.catch((error) => {
+					this.logger_.warn(error.response)
+					throw error
+				})
+		} else { // Order does not exist
+			const { shipping_address, customer } = fromOrder
+			const id = fulfillment.id
+			const visible_ref = `${fromOrder.display_id}-${id.substr(
 				id.length - 4
 			)}`
-			let ext_ref = `${fromOrder.id}.${fulfillment.id}`
+			const ext_ref = `${fromOrder.id}.${fulfillment.id}`
 
-			if (fromOrder.is_swap) {
-				visible_ref = `${fromOrder.display_id}`
+			let esynergi_customer = await this.client_.customers.retrieve(fromOrder.email)
+
+			if(!esynergi_customer){
+				const newCustomer = {
+					customer_no: customer.id,
+					name: `${customer.first_name} ${customer.last_name}`,
+					email: customer.email,
+					telephone: customer.phone,
+					address: {
+						street: shipping_address.address_1,
+						zip_code: shipping_address.postal_code,
+						city: shipping_address.city,
+						country: shipping_address.country_code
+					}
+				}
+				esynergi_customer = await this.client_.customers.create(newCustomer)
 			}
 
 			const newOrder = {
-				order_no: 'XXX',
-				customer_no: 'XXX',
-				delivery_date: 'XXX',
+				order_no: visible_ref,
+				customer_no: esynergi_customer.id,
+				delivery_date: new Date().toLocaleDateString(),
 				shop_id: 'XXX',
-				reference: 'XXX',
-				note: 'XXX',
+				reference: ext_ref,
 				phone: shipping_address.phone,
 				email: fromOrder.email,
 				company_id: methodData.carrier_id,
@@ -178,17 +184,19 @@ class EsynergiFulfillmentService extends FulfillmentService {
 		const order = await this.client_.orders
 			.retrieve(data.id)
 			.catch(() => undefined)
-		
+
 		if (!order) {
 			return Promise.resolve()
 		}
 
-		const itemAlreadyShipped = order.data.items.some((item) => item.status === '5900' || item.status === '5901')
+		const itemAlreadyShipped = order.data.items.some(
+			(item) => item.status === '5900' || item.status === '5901'
+		)
 
-		if (itemAlreadyShipped) throw new Error("Cannot cancel order that is shipped or completed")
+		if (itemAlreadyShipped)
+			throw new Error('Cannot cancel order that is shipped or completed')
 
 		return this.client_.orders.delete(data.id)
-
 	}
 }
 
