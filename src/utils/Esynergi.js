@@ -5,8 +5,7 @@ class Esynergi {
 		this.account = account
 		this.token = token
 		this.client = axios.create({
-			baseURL: `https://${account}.wms.e-synergi.dk/api-ext-v1`,
-			// Check the correct base path
+			baseURL: `https://${account}/api-ext-v1`,
 			headers: {
 				'content-type': 'application/vnd.api+json',
 				Authorization: `Bearer ${token}`,

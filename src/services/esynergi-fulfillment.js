@@ -54,7 +54,7 @@ class EsynergiFulfillmentService extends FulfillmentService {
 			esynergi_id: r.service_id,
 			carrier_id: r.company_id,
 			name: r.service_name,
-			require_drop_point: r.service_code === 'XXX' ? true : false, // TODO: Check what service codes require drop point
+			require_drop_point: r.service_code === 'ShopDeliveryService' ? true : false, // TODO: Check what service codes require drop point
 		}))
 	}
 
