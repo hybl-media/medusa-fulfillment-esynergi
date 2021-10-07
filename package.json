@@ -1,6 +1,6 @@
 {
   "name": "medusa-fulfillment-esynergi",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "E-Synergi Fulfillment provider for Medusa",
   "main": "index.js",
   "keywords": [
