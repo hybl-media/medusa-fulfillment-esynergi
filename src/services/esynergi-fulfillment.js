@@ -40,6 +40,10 @@ class EsynergiFulfillmentService extends FulfillmentService {
 		/** @private @const {SwapService} */
 		this.claimService_ = claimService
 
+		if(!this.options_.account) this.logger_.warn("Missing account for Esynergi plugin")
+		if(!this.options_.email) this.logger_.warn("Missing email for Esynergi plugin")
+		if(!this.options_.password) this.logger_.warn("Missing password for Esynergi plugin")
+
 		/** @private @const {AxiosClient} */
 		this.client_ = new Esynergi({
 			account: this.options_.account,
