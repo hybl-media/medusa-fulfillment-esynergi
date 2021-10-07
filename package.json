@@ -8,6 +8,7 @@
     "medusa-payment",
     "medusa-plugin"
   ],
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hybl-media/medusa-fulfillment-esynergi.git"
