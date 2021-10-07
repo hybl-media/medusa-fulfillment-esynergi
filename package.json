@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "E-Synergi Fulfillment provider for Medusa",
   "main": "index.js",
+  "keywords": [
+    "medusa",
+    "medusa-payment",
+    "medusa-plugin"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hybl-media/medusa-fulfillment-esynergi.git"
