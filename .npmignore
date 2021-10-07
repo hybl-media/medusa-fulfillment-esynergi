@@ -5,9 +5,4 @@ node_modules
 /*.js
 !index.js
 yarn.lock
-
-/api
-/services
-/models
-/subscribers
-/utils
+/src
