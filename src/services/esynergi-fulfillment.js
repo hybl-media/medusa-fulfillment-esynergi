@@ -55,7 +55,7 @@ class EsynergiFulfillmentService extends FulfillmentService {
 			esynergi_id: r.service_id,
 			carrier_id: r.company_id,
 			name: r.service_name,
-			is_return: true,
+			is_return: false,
 			require_drop_point:
 				r.service_code === 'ShopDeliveryService' ||
 				r.service_code === 'P19DK'
